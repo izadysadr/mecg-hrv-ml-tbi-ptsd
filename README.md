@@ -1,12 +1,12 @@
-# Multivariate Machine Learning Analysis of MEG‑Derived Heart Rate Variability in TBI With and Without Comorbid PTSD
+# Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI With and Without Comorbid PTSD
 
 ## Overview
 
 This repository contains the **working analysis code** used in the study:
 
-**"Multivariate Machine Learning Analysis of MEG‑Derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"**
+**"Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"**
 
-The project investigates whether multivariate machine‑learning models applied to **heart rate variability (HRV)** features extracted from **MEG-derived ECG (M‑ECG)** signals can differentiate veterans with **TBI alone** from those with **comorbid PTSD (TBI+PTSD)**.
+The project investigates whether multivariate machine‑learning models applied to **heart rate variability (HRV)** features extracted from **MEG-derived electrocardiogram (M‑ECG)** signals can differentiate veterans with **TBI alone** from those with **comorbid PTSD (TBI+PTSD)**.
 
 Rather than relying on isolated univariate HRV comparisons, this pipeline extracts **time-domain, frequency-domain, geometric, and nonlinear HRV metrics** and evaluates their **joint discriminative structure** using **nested cross-validated machine learning**, feature selection, and model interpretability techniques.
 
@@ -36,7 +36,7 @@ The code here reflects the **exact feature-generation backbone** that supports d
 - **Groups**:
   - TBI only (TBI‑PTSD): *n = 42*  
   - TBI + PTSD: *n = 47*  
-- **Signal Source**: MEG‑derived ECG (M‑ECG)  
+- **Signal Source**: M-ECG
 - **Condition**: Resting state  
 - **RR Interval Format**:
   - Pickled NumPy arrays
@@ -234,7 +234,7 @@ This repository is intended for:
 
 - Neurocardiac and psychophysiological research
 - HRV feature engineering for machine learning
-- MEG-derived ECG analysis pipelines
+- M-ECG analysis pipelines
 - Methodological replication and extension
 
 It is **not** intended for clinical diagnosis.
