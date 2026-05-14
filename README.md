@@ -150,19 +150,19 @@ Ingests the previously generated HRV metrics alongside clinical demographic data
 
 **Core Pipeline Features**:
 
-**Nested Cross-Validation**: 5-fold outer CV for evaluation; repeated 3-fold inner CV for hyperparameter tuning.
-
-
-**Feature Selection**: Correlation-based redundancy filtering followed by all-relevant wrapper-based selection using Boruta.
-
-
-**Classification**: Optimized XGBoost and Random Forest models.
-
-
-**Statistical Inference**: Exact paired permutation testing for AUC comparison, and nonparametric bootstrapping (n=10,000) for 95% confidence intervals.
-
-
-**Explainability**: SHapley Additive exPlanations (SHAP) pooled across test folds for global feature importance and dependence visualization.
+   **Nested Cross-Validation**: 5-fold outer CV for evaluation; repeated 3-fold inner CV for hyperparameter tuning.
+   
+   
+   **Feature Selection**: Correlation-based redundancy filtering followed by all-relevant wrapper-based selection using Boruta.
+   
+   
+   **Classification**: Optimized XGBoost and Random Forest models.
+   
+   
+   **Statistical Inference**: Exact paired permutation testing for AUC comparison, and nonparametric bootstrapping (n=10,000) for 95% confidence intervals.
+   
+   
+   **Explainability**: SHapley Additive exPlanations (SHAP) pooled across test folds for global feature importance and dependence visualization.
 
 
 
