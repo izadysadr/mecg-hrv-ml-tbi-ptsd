@@ -35,8 +35,8 @@ TBI and PTSD frequently co-occur and share overlapping symptomatology and autono
 
 This project demonstrates that:
 
-- **Multivariate HRV patterns** contain diagnostically relevant information even when univariate effects are weak or absent.
-- **Machine learning approaches** can uncover distributed autonomic signatures associated with psychiatric and neurological comorbidity.
+**Multivariate HRV patterns** contain diagnostically relevant information even when univariate effects are weak or absent.
+**Machine learning approaches** can uncover distributed autonomic signatures associated with psychiatric and neurological comorbidity.
 
 ### Manuscript Information
 
