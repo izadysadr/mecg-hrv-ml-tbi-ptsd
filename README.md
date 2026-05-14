@@ -37,7 +37,6 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 
 ## Dataset Summary
 
-* 
 **Population**: Veterans (drawn from the Chronic Effects of Neurotrauma Consortium Study 34).
 
 
