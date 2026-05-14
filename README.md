@@ -18,11 +18,9 @@ Rather than relying on isolated univariate HRV comparisons, this pipeline extrac
 
 TBI and PTSD frequently co-occur and share overlapping symptomatology and autonomic dysfunction. Traditional HRV analyses often fail to detect robust group differences after correction for multiple comparisons. This project demonstrates that:
 
-* 
 **Multivariate HRV patterns** carry diagnostically relevant information even when univariate HRV effects are weak or absent.
 
 
-* 
 **Machine learning models** can uncover distributed autonomic signatures linked to comorbidity.
 
 
@@ -52,11 +50,9 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 
 
 
-* 
 **Signal Source**: M-ECG 
 
 
-* 
 **Condition**: Resting state (5 minutes) 
 
 
@@ -155,23 +151,18 @@ Ingests the previously generated HRV metrics alongside clinical demographic data
 
 **Core Pipeline Features**:
 
-* 
 **Nested Cross-Validation**: 5-fold outer CV for evaluation; repeated 3-fold inner CV for hyperparameter tuning.
 
 
-* 
 **Feature Selection**: Correlation-based redundancy filtering followed by all-relevant wrapper-based selection using Boruta.
 
 
-* 
 **Classification**: Optimized XGBoost and Random Forest models.
 
 
-* 
 **Statistical Inference**: Exact paired permutation testing for AUC comparison, and nonparametric bootstrapping (n=10,000) for 95% confidence intervals.
 
 
-* 
 **Explainability**: SHapley Additive exPlanations (SHAP) pooled across test folds for global feature importance and dependence visualization.
 
 
@@ -228,23 +219,19 @@ pip install numpy scipy pandas matplotlib seaborn statsmodels mne antropy nolds 
 
 **Library Roles**:
 
-* 
 **Neurophysiology / Signal Processing**: `mne` 
 
 
-* 
 **Nonlinear Dynamics**: `antropy`, `nolds` 
 
 
-* 
 **Machine Learning**: `scikit-learn`, `xgboost`, `boruta` 
 
 
-* 
 **Interpretability & Stats**: `shap`, `statsmodels`, `scipy` 
 
 
-* **Standard Libraries** (built-in): `os`, `re`, `pickle`, `pathlib`, `logging`, `warnings`, `itertools`, `typing`
+**Standard Libraries** (built-in): `os`, `re`, `pickle`, `pathlib`, `logging`, `warnings`, `itertools`, `typing`
 
 ---
 
