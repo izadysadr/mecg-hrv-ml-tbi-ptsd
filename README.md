@@ -1,88 +1,69 @@
-```markdown
-# Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI With and Without Comorbid PTSD
+# Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI With and Without Comorbid PTSD 
 
 ---
 
 ## Overview
 
-This repository contains the working analysis code used in the study:
+This repository contains the **working analysis code** used in the study:
 
-> **"Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"**
+**"Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"** 
 
-The project investigates whether multivariate machine-learning models applied to heart rate variability (HRV) features extracted from MEG-derived electrocardiogram (M-ECG) signals can differentiate Veterans with:
+The project investigates whether multivariate machine‑learning models applied to **heart rate variability (HRV)** features extracted from **MEG-derived electrocardiogram (M‑ECG)** signals can differentiate Veterans with **TBI alone** from those with **comorbid PTSD (TBI+PTSD)**.
 
-- **TBI alone**
-- **TBI with comorbid PTSD (TBI+PTSD)**
-
-Rather than relying solely on isolated univariate HRV comparisons, this pipeline extracts:
-
-- Time-domain HRV metrics
-- Frequency-domain HRV metrics
-- Geometric HRV metrics
-- Nonlinear HRV metrics
-
-These features are evaluated using:
-
-- Nested cross-validated machine learning
-- Feature selection
-- Statistical inference
-- Model interpretability techniques
+Rather than relying on isolated univariate HRV comparisons, this pipeline extracts **time-domain, frequency-domain, geometric, and nonlinear HRV metrics** and evaluates their **joint discriminative structure** using **nested cross-validated machine learning**, feature selection, and model interpretability techniques.
 
 ---
 
 ## Scientific Motivation
 
-TBI and PTSD frequently co-occur and share overlapping symptomatology and autonomic dysfunction. Traditional HRV analyses often fail to detect robust group differences after correction for multiple comparisons.
+TBI and PTSD frequently co-occur and share overlapping symptomatology and autonomic dysfunction. Traditional HRV analyses often fail to detect robust group differences after correction for multiple comparisons. This project demonstrates that:
 
-This project demonstrates that:
+**Multivariate HRV patterns** carry diagnostically relevant information even when univariate HRV effects are weak or absent.
 
-- **Multivariate HRV patterns** contain diagnostically relevant information even when univariate effects are weak or absent.
-- **Machine learning approaches** can uncover distributed autonomic signatures associated with psychiatric and neurological comorbidity.
 
-### Manuscript Information
+**Machine learning models** can uncover distributed autonomic signatures linked to comorbidity.
 
-- DOI: *To be added*
-- PMID: *To be added*
 
-The code in this repository reflects the exact feature-generation backbone and statistical modeling pipeline used for downstream inference and interpretation.
+
+Manuscript Link:
+
+DOI: [To be added]
+
+PMID: [To be added]
+
+The code here reflects the **exact feature-generation backbone** and **statistical modeling pipeline** that supports downstream inference and interpretation.
 
 ---
 
 ## Dataset Summary
 
-### Population
+**Population**: Veterans (drawn from the Chronic Effects of Neurotrauma Consortium Study 34).
 
-Veterans drawn from the **Chronic Effects of Neurotrauma Consortium (CENC) Study 34**
 
-### Groups
+* **Groups**:
+    * TBI only (TBI-alone): *n = 42* 
 
-| Group | Sample Size |
-|---|---|
-| TBI only (TBI-alone) | n = 42 |
-| TBI + PTSD | n = 40 |
 
-### Signal Source
+    * TBI + PTSD: *n = 40* 
 
-- M-ECG (MEG-derived ECG)
 
-### Recording Condition
 
-- Resting-state
-- 5-minute recordings
 
-### RR Interval Format
+**Signal Source**: M-ECG 
 
-Pickled NumPy arrays with shape:
 
-```python
-(N, 2)
+**Condition**: Resting state (5 minutes) 
 
-```
 
-| Column | Description |
-| --- | --- |
-| Column 0 | Cumulative time (seconds) |
-| Column 1 | RR intervals (seconds) |
+* **RR Interval Format**:
+    * Pickled NumPy arrays
+    * Shape: `(N, 2)`
+    * Column 0: cumulative time (seconds)
+    * Column 1: RR intervals (seconds)
+
+
+
+
 
 ---
 
@@ -98,180 +79,94 @@ Pickled NumPy arrays with shape:
 
 ```
 
-The scripts are sequentially numbered to reflect execution order.
-
-* Scripts 1–3 compute HRV feature sets and generate subject-level CSV files.
-* Script 4 ingests these features alongside demographic variables to execute the machine-learning workflow.
+The scripts are sequentially numbered to reflect the execution order. The first three compute distinct classes of HRV features and output subject-level CSV files. The fourth script ingests these CSVs alongside clinical demographics to run the machine-learning pipeline.
 
 ---
 
-# Script Descriptions & Usage
+## Script Descriptions & Usage
 
-All scripts support command-line execution using `argparse`.
+All scripts are configured for command-line execution, utilizing `argparse` to handle input directories and output destinations cleanly.
 
----
+### 1. Time-Domain HRV Extraction
 
-## 1. Time-Domain HRV Extraction
-
-### File
-
-```text
-01_extract_hrv_time.py
-
-```
-
-### Description
+**File**: `01_extract_hrv_time.py`
 
 Computes classical time-domain HRV metrics from corrected RR intervals.
 
-### Metrics Extracted
+**Metrics extracted**:
 
-* Mean RR interval (ms)
-* Mean heart rate (bpm)
-* SDNN (ms)
-* RMSSD (ms)
-* SDSD (ms)
-* NN50 count
-* pNN50 (%)
+* Mean RR interval (ms), Mean heart rate (bpm), SDNN (ms), RMSSD (ms), SDSD (ms), NN50 count, pNN50 (%)
 
-### Usage
+**Usage**:
 
 ```bash
-python 01_extract_hrv_time.py \
-    -i /path/to/data \
-    -o /path/to/save/time_domain_hrv_metrics.csv
+python 01_extract_hrv_time.py -i /path/to/data -o /path/to/save/time_domain_hrv_metrics.csv
 
 ```
 
----
+### 2. Frequency-Domain HRV Extraction
 
-## 2. Frequency-Domain HRV Extraction
+**File**: `02_extract_hrv_frequency.py`
 
-### File
+Computes spectral HRV features using RR-interval-based power spectral density estimation (Welch's method) bounded to standard physiological ranges (0–0.4 Hz).
 
-```text
-02_extract_hrv_frequency.py
+**Metrics extracted**:
 
-```
-
-### Description
-
-Computes spectral HRV features using Welch power spectral density estimation constrained to physiological frequency ranges (0–0.4 Hz).
-
-### Metrics Extracted
-
-* Absolute power:
-* VLF
-* LF
-* HF
-
-
-* Relative power:
-* LF (%)
-* HF (%)
-
-
+* Absolute and relative power for VLF, LF, and HF bands
 * LF/HF ratio
-* LF peak frequency
-* HF peak frequency
+* LF and HF peak frequencies (Hz)
 * Total power
 
-### Usage
+**Usage**:
 
 ```bash
-python 02_extract_hrv_frequency.py \
-    -i /path/to/data \
-    -o /path/to/save/frequency_domain_hrv_metrics.csv
+python 02_extract_hrv_frequency.py -i /path/to/data -o /path/to/save/frequency_domain_hrv_metrics.csv
 
 ```
 
----
+### 3. Poincaré & Nonlinear HRV Extraction
 
-## 3. Poincaré & Nonlinear HRV Extraction
+**File**: `03_extract_hrv_nonlinear.py`
 
-### File
+Computes nonlinear and geometric HRV measures sensitive to **complexity, irregularity, and fractal structure**.
 
-```text
-03_extract_hrv_nonlinear.py
+**Metrics extracted**:
 
-```
+* **Poincaré Metrics**: SD1, SD2, SD1/SD2 ratio, Ellipse area (S)
+* **Nonlinear Metrics**: Approximate Entropy (ApEn), Sample Entropy (SampEn), Detrended Fluctuation Analysis (DFA α1)
 
-### Description
-
-Computes nonlinear and geometric HRV measures sensitive to:
-
-* Signal complexity
-* Irregularity
-* Fractal structure
-
-### Metrics Extracted
-
-#### Poincaré Metrics
-
-* SD1
-* SD2
-* SD1/SD2 ratio
-* Ellipse area (S)
-
-#### Nonlinear Metrics
-
-* Approximate Entropy (ApEn)
-* Sample Entropy (SampEn)
-* DFA α1
-
-### Usage
+**Usage**:
 
 ```bash
-python 03_extract_hrv_nonlinear.py \
-    -i /path/to/data \
-    -o /path/to/save/non_linear_hrv_metrics.csv
+python 03_extract_hrv_nonlinear.py -i /path/to/data -o /path/to/save/non_linear_hrv_metrics.csv
 
 ```
 
----
+### 4. Machine Learning Classification Pipeline
 
-## 4. Machine Learning Classification Pipeline
-
-### File
-
-```text
-04_ml_classification_pipeline.py
-
-```
-
-### Description
+**File**: `04_ml_classification_pipeline.py`
 
 Ingests the previously generated HRV metrics alongside clinical demographic data to execute a rigorous, leakage-free modeling pipeline.
 
-### Core Pipeline Features
+**Core Pipeline Features**:
 
-* **Nested Cross-Validation**
-* 5-fold outer CV for evaluation
-* Repeated 3-fold inner CV for hyperparameter tuning
-
-
-* **Feature Selection**
-* Correlation-based redundancy filtering
-* All-relevant wrapper-based selection using Boruta
-
-
-* **Classification**
-* Optimized XGBoost
-* Random Forest models
-
-
-* **Statistical Inference**
-* Exact paired permutation testing for AUC comparison
-* Nonparametric bootstrapping (`n = 10,000`) for 95% confidence intervals
-
-
-* **Explainability**
-* SHapley Additive exPlanations (SHAP)
-* Global feature importance and dependence visualization pooled across test folds
+   **Nested Cross-Validation**: 5-fold outer CV for evaluation; repeated 3-fold inner CV for hyperparameter tuning.
+   
+   
+   **Feature Selection**: Correlation-based redundancy filtering followed by all-relevant wrapper-based selection using Boruta.
+   
+   
+   **Classification**: Optimized XGBoost and Random Forest models.
+   
+   
+   **Statistical Inference**: Exact paired permutation testing for AUC comparison, and nonparametric bootstrapping (n=10,000) for 95% confidence intervals.
+   
+   
+   **Explainability**: SHapley Additive exPlanations (SHAP) pooled across test folds for global feature importance and dependence visualization.
 
 
 
-### Usage
+**Usage**:
 
 ```bash
 python 04_ml_classification_pipeline.py \
@@ -283,119 +178,99 @@ python 04_ml_classification_pipeline.py \
 
 ---
 
-# Key Findings
+## Key Findings (Project Context)
 
-* Random Forest achieved:
-* **AUC = 0.663**
-
-
-* XGBoost achieved:
-* **AUC = 0.635**
+* Both Random Forest and XGBoost classifiers achieved above-chance discrimination (Random Forest AUC = 0.663; XGBoost AUC = 0.635).
 
 
+* Informative features driving the models included:
+* Altered sympathovagal balance (LF/HF ratio) 
 
-### Important Predictive Features
 
-* LF/HF ratio
-* LF % total power
-* Approximate Entropy (ApEn)
+* Increased low-frequency proportion (LF % total power) 
 
-### Interpretation
 
-Univariate HRV differences were subtle and did **not survive multiple-comparison correction** (`FDR-adjusted p ≥ 0.13`), emphasizing the value of multivariate modeling approaches.
+* Greater heart rate complexity (ApEn) 
+
+
+
+
+* Univariate HRV differences were subtle and did **not survive multiple-comparison correction** (FDR-adjusted p ≥ 0.13), highlighting the necessity of the multivariate approach.
+
+
 
 ---
 
-# Dependencies
+## Dependencies
 
-## Python Version
+### Required Python Version
 
-* Python ≥ 3.8
-* Recommended: Python ≥ 3.9
+* Python ≥ 3.8 *(Recommended: Python ≥ 3.9 for full compatibility with scientific libraries)*
 
-## Installation
+### Installation
+
+To install all required dependencies, run:
 
 ```bash
-pip install numpy scipy pandas matplotlib seaborn statsmodels \
-mne antropy nolds scikit-learn xgboost shap boruta
+pip install numpy scipy pandas matplotlib seaborn statsmodels mne antropy nolds scikit-learn xgboost shap boruta
 
 ```
 
----
+**Library Roles**:
 
-## Library Roles
+**Neurophysiology / Signal Processing**: `mne` 
 
-| Category | Libraries |
-| --- | --- |
-| Neurophysiology / Signal Processing | `mne` |
-| Nonlinear Dynamics | `antropy`, `nolds` |
-| Machine Learning | `scikit-learn`, `xgboost`, `boruta` |
-| Explainability & Statistics | `shap`, `statsmodels`, `scipy` |
 
-### Standard Libraries Used
+**Nonlinear Dynamics**: `antropy`, `nolds` 
 
-```python
-os
-re
-pickle
-pathlib
-logging
-warnings
-itertools
-typing
 
-```
+**Machine Learning**: `scikit-learn`, `xgboost`, `boruta` 
+
+
+**Interpretability & Stats**: `shap`, `statsmodels`, `scipy` 
+
+
+**Standard Libraries** (built-in): `os`, `re`, `pickle`, `pathlib`, `logging`, `warnings`, `itertools`, `typing`
 
 ---
 
-# Reproducibility Notes
+## Reproducibility Notes
 
-* All extraction scripts operate on pre-corrected RR intervals.
-* No subject labels or paths are hard-coded.
-* Random seeds (`RANDOM_STATE = 42`) are enforced throughout the ML workflow.
-* Feature selection and preprocessing are isolated strictly within training folds to prevent data leakage.
+* All extraction scripts operate on **pre-corrected RR intervals**.
+* No subject labels or paths are hard-coded; all file discovery is dynamic.
+* Random seeds (e.g., `RANDOM_STATE = 42`) are strictly enforced throughout the ML pipeline for CV splits, Boruta shadow features, model initialization, and bootstrapping to guarantee reproducibility.
+
+
+* The ML pipeline isolates imputation, correlation filtering, and feature selection entirely within the training folds to strictly prevent data leakage.
+
+
 
 ---
 
-# Intended Use
+## Intended Use
 
 This repository is intended for:
 
-* Neurocardiac research
-* Psychophysiology
-* HRV feature engineering
+* Neurocardiac and psychophysiological research
+* HRV feature engineering for machine learning
 * M-ECG analysis pipelines
 * Methodological replication and extension
 
-> **Note:** This repository is not intended for clinical diagnosis.
+*It is **not** intended for clinical diagnosis.*
 
 ---
 
-# Citation
+## Citation
 
-If you use or adapt this code, please cite the associated manuscript:
+If you use or adapt this code, please cite the associated manuscript and acknowledge the original author:
 
-> Izadysadr, A., Bagherzadeh, H. S., Rowland, J., Stapleton-Kotloski, J. R., & Godwin, D. W. (2026). *Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD*.
+[To be added]
 
-DOI: *To be added*
+DOI: [To be added]
 
 ---
 
-# Author
+## Author
 
-## Aqil Izadysadr
-
-Department of Neurology
-
-Wake Forest School of Medicine
-
-### Research Focus
-
-* Neurocardiac Signal Analysis
-* Heart Rate Variability
-* Machine Learning
-* Computational Neuroscience
-
-```
-
-```
+**Aqil Izadysadr** Department of Neurology, Wake Forest School of Medicine 
+Neurocardiac Signal Analysis & Machine Learning
