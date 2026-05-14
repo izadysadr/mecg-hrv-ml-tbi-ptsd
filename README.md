@@ -6,7 +6,7 @@
 
 This repository contains the working analysis code used in the study:
 
-> **“Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD”**
+> **"Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"**
 
 The project investigates whether multivariate machine-learning models applied to heart rate variability (HRV) features extracted from MEG-derived electrocardiogram (M-ECG) signals can differentiate Veterans with:
 
@@ -158,9 +158,11 @@ Computes spectral HRV features using Welch power spectral density estimation con
   - VLF
   - LF
   - HF
+
 - Relative power:
   - LF (%)
   - HF (%)
+
 - LF/HF ratio
 - LF peak frequency
 - HF peak frequency
@@ -227,34 +229,29 @@ python 03_extract_hrv_nonlinear.py \
 
 ### Description
 
-Integrates extracted HRV metrics with demographic data and performs a leakage-free machine-learning analysis pipeline.
+Ingests the previously generated HRV metrics alongside clinical demographic data to execute a rigorous, leakage-free modeling pipeline.
 
 ### Core Pipeline Features
 
-#### Nested Cross-Validation
+- **Nested Cross-Validation**
+  - 5-fold outer CV for evaluation
+  - Repeated 3-fold inner CV for hyperparameter tuning
 
-- 5-fold outer cross-validation
-- Repeated 3-fold inner cross-validation for hyperparameter tuning
+- **Feature Selection**
+  - Correlation-based redundancy filtering
+  - All-relevant wrapper-based selection using Boruta
 
-#### Feature Selection
+- **Classification**
+  - Optimized XGBoost
+  - Random Forest models
 
-- Correlation-based redundancy filtering
-- Boruta all-relevant wrapper feature selection
+- **Statistical Inference**
+  - Exact paired permutation testing for AUC comparison
+  - Nonparametric bootstrapping (`n = 10,000`) for 95% confidence intervals
 
-#### Classification Models
-
-- Random Forest
-- XGBoost
-
-#### Statistical Inference
-
-- Exact paired permutation testing for AUC comparison
-- Nonparametric bootstrapping (`n = 10,000`) for confidence intervals
-
-#### Explainability
-
-- SHAP (SHapley Additive exPlanations)
-- Pooled fold-level feature importance analysis
+- **Explainability**
+  - SHapley Additive exPlanations (SHAP)
+  - Global feature importance and dependence visualization pooled across test folds
 
 ### Usage
 
