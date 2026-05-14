@@ -41,10 +41,10 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 
 
 * **Groups**:
-* TBI only (TBI-alone): *n = 42* 
+    * TBI only (TBI-alone): *n = 42* 
 
 
-* TBI + PTSD: *n = 40* 
+    * TBI + PTSD: *n = 40* 
 
 
 
@@ -56,10 +56,10 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 
 
 * **RR Interval Format**:
-* Pickled NumPy arrays
-* Shape: `(N, 2)`
-* Column 0: cumulative time (seconds)
-* Column 1: RR intervals (seconds)
+    * Pickled NumPy arrays
+    * Shape: `(N, 2)`
+    * Column 0: cumulative time (seconds)
+    * Column 1: RR intervals (seconds)
 
 
 
