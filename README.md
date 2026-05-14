@@ -264,7 +264,7 @@ This repository is intended for:
 
 If you use or adapt this code, please cite the associated manuscript and acknowledge the original author:
 
-Izadysadr, A., Bagherzadeh, H. S., Rowland, J., Stapleton-Kotloski, J. R., & Godwin, D. W. (2026). *Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD*. 
+[To be added]
 
 DOI: [To be added]
 
