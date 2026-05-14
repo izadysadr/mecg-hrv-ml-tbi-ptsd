@@ -75,6 +75,7 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 ├── 02_extract_hrv_frequency.py
 ├── 03_extract_hrv_nonlinear.py
 ├── 04_ml_classification_pipeline.py
+├── LICENSE
 ├── README.md
 
 ```
