@@ -172,7 +172,7 @@ Ingests the previously generated HRV metrics alongside clinical demographic data
 ```bash
 python 04_ml_classification_pipeline.py \
     --demo_file /path/to/demographics.xlsx \
-    --metrics_dir /path/to/HRV_Metrics_Folder \
+    --metrics_dir /path/to/HRV_metrics_folder \
     --output_dir /path/to/save/results
 
 ```
