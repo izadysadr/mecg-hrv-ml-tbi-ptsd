@@ -20,9 +20,9 @@ Usage:
 ------
 Run via command line specifying the inputs and output directory:
 
-    python machine_learning_pipeline.py \
+    python 04_ml_classification_pipeline.py \
         --demo_file /path/to/demographics.xlsx \
-        --metrics_dir /path/to/HRV_Metrics_Folder \
+        --metrics_dir /path/to/HRV_metrics_folder \
         --output_dir /path/to/save/results
 
 ===============================================================================
@@ -35,7 +35,7 @@ import re
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,7 +75,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(message)s', # Simplified format to match original print statements closely
+    format='%(message)s',
 )
 logger = logging.getLogger(__name__)
 
@@ -313,7 +313,7 @@ def run_nested_cv(X_full: pd.DataFrame, y_full: pd.Series) -> Dict[str, Any]:
         X_test_filt = X_test_imp.drop(columns=to_drop)
         logger.info(f"\nFold {fold_idx}, dropped: {to_drop}")
 
-        # Apply Boruta feature selection to robustly capture all relevant features, 
+        # Apply Boruta feature selection to capture all relevant features, 
         # ensuring comprehensive biomarker discovery prior to model training.
         rf_bor = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=RANDOM_STATE, n_jobs=-1)
         boruta = BorutaPy(rf_bor, n_estimators='auto', max_iter=50, alpha=0.1, random_state=RANDOM_STATE)
@@ -533,7 +533,7 @@ def compute_statistics(
 
 def generate_plots(results: Dict[str, Any], output_dir: Path) -> None:
     """
-    Generates and saves publication-quality global Interpretability and ROC visualizations.
+    Generates and saves global Interpretability and ROC visualizations.
 
     Aggregates local SHAP explanations across all test folds to generate global
     feature importance, violin, and dependence plots, ensuring valid global

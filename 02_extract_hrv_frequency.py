@@ -46,7 +46,7 @@ Usage:
 ------
 Run via command line specifying the input directory and output CSV path:
 
-    python m-ecg_frequency_domain_hrv_extraction.py -i /path/to/data -o /path/to/save/frequency_domain_hrv_metrics.csv
+    python 02_extract_hrv_frequency.py -i /path/to/data -o /path/to/save/frequency_domain_hrv_metrics.csv
 
 ===============================================================================
 """
@@ -56,7 +56,7 @@ import logging
 import pickle
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import mne

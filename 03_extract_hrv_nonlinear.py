@@ -6,7 +6,7 @@ Title: HRV Poincaré and Nonlinear Metrics Extraction from M-ECG RR Intervals
 ===============================================================================
 
 Author:      AQIL IZADYSADR
-Created:     June 30, 2025
+Created:     July 20, 2025
 
 Description:
 ------------
@@ -44,7 +44,7 @@ Usage:
 ------
 Run via command line specifying the input directory and output CSV path:
 
-    python m-ecg_geometric_and_non_linear_hrv_extraction.py -i /path/to/data -o /path/to/save/non_linear_hrv_metrics.csv
+    python 03_extract_hrv_nonlinear.py -i /path/to/data -o /path/to/save/non_linear_hrv_metrics.csv
 
 ===============================================================================
 """

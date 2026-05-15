@@ -6,7 +6,7 @@ Title: HRV Time-Domain Metrics Extraction from M-ECG RR Intervals
 ===============================================================================
 
 Author:      AQIL IZADYSADR
-Created:     June 20, 2025
+Created:     June 10, 2025
 
 Description:
 ------------
@@ -44,7 +44,7 @@ Usage:
 ------
 Run via command line specifying the input directory and output CSV path:
 
-    python m-ecg_time_domain_hrv_extraction.py -i /path/to/data -o /path/to/save/time_domain_hrv_metrics.csv
+    python 01_extract_hrv_time.py -i /path/to/data -o /path/to/save/time_domain_hrv_metrics.csv
 
 ===============================================================================
 """
@@ -148,7 +148,7 @@ def process_hrv_data(input_dir: str, output_csv: str) -> None:
 
     logger.info(f"Found {len(matching_files)} files to process.")
 
-    # List to accumulate dictionary rows (highly optimized for memory)
+    # List to accumulate dictionary rows (optimized for memory)
     results_list = []
     
     # Regex to extract Subject ID safely
