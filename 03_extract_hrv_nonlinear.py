@@ -6,7 +6,6 @@ Title: HRV Poincaré and Nonlinear Metrics Extraction from M-ECG RR Intervals
 ===============================================================================
 
 Author:      AQIL IZADYSADR
-Created:     July 20, 2025
 
 Description:
 ------------

@@ -6,7 +6,6 @@ Title: HRV Time-Domain Metrics Extraction from M-ECG RR Intervals
 ===============================================================================
 
 Author:      AQIL IZADYSADR
-Created:     June 10, 2025
 
 Description:
 ------------
