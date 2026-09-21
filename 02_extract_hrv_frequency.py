@@ -20,9 +20,9 @@ Key Features:
 -------------
 1. Interpolates RR intervals using cubic splines to ensure evenly spaced time points.
 2. Computes PSD via Welch’s method (0–0.4 Hz).
-3. Extracts frequency-domain HRV metrics for each subject:
+3. Extracts the frequency-domain HRV metrics used in the manuscript:
    - Absolute power (ms²) for VLF, LF, HF
-   - Relative power (%) for VLF, LF, HF
+   - Relative power (%) for LF and HF
    - LF/HF ratio
    - LF and HF peak frequencies (Hz)
    - Total power across all bands
@@ -157,7 +157,7 @@ def compute_hrv_band_powers_and_plot(
     Returns:
         Dict[str, Any]: A dictionary containing:
             - absolute_power (Dict[str, float]): Absolute power (ms²) for VLF, LF, HF.
-            - relative_power (Dict[str, float]): Relative power (%) for VLF, LF, HF.
+            - relative_power (Dict[str, float]): Relative power (%) for LF and HF.
             - lf_hf_ratio (float): The calculated LF/HF ratio.
             - total_power (float): Sum of absolute powers across all bands.
             - lf_peak_freq (float): Frequency (Hz) of maximum power in the LF band.
@@ -181,10 +181,11 @@ def compute_hrv_band_powers_and_plot(
     # Total power across all standard bands
     total_power = sum(powers_abs.values())
 
-    # Compute relative power (%) for each band, handling division by zero
+    # Compute the relative-power features used in the manuscript.
+    # The denominator is total power across VLF + LF + HF.
     powers_rel = {
-        band: (power / total_power) * 100 if total_power != 0 else np.nan
-        for band, power in powers_abs.items()
+        band: (powers_abs[band] / total_power) * 100 if total_power != 0 else np.nan
+        for band in ("LF", "HF")
     }
 
     # Compute LF/HF ratio as a traditional index of sympathovagal balance
@@ -304,10 +305,8 @@ def process_frequency_hrv_data(input_dir: str, output_csv: str) -> None:
         # Compute HRV frequency-domain metrics
         hrv_results = compute_hrv_band_powers_and_plot(freqs, psd)
 
-        # Log-transform absolute power values to address physiological skewness 
-        # and ensure normal distribution for downstream parametric statistical testing.
+        # Absolute band powers used in the manuscript
         abs_power = hrv_results["absolute_power"]
-        abs_power_ln = {band: np.log(power + 1e-10) for band, power in abs_power.items()}
 
         logger.info(f"[{counter}/{len(matching_files)}] Processed: {subject_id} | LF/HF Ratio: {hrv_results['lf_hf_ratio']:.3f}")
 
@@ -319,10 +318,6 @@ def process_frequency_hrv_data(input_dir: str, output_csv: str) -> None:
             'VLF - absolute power (ms²)': abs_power['VLF'],
             'LF - absolute power (ms²)': abs_power['LF'],
             'HF - absolute power (ms²)': abs_power['HF'],
-            'VLF - absolute power ln(ms²)': abs_power_ln['VLF'],
-            'LF - absolute power ln(ms²)': abs_power_ln['LF'],
-            'HF - absolute power ln(ms²)': abs_power_ln['HF'],
-            'VLF - relative power (%)': hrv_results["relative_power"]['VLF'],
             'LF - relative power (%)': hrv_results["relative_power"]['LF'],
             'HF - relative power (%)': hrv_results["relative_power"]['HF'],
             'LF/HF Ratio': hrv_results["lf_hf_ratio"],

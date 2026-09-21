@@ -1,69 +1,19 @@
-# Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI With and Without Comorbid PTSD 
-
----
+# Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Veterans, With and Without Current PTSD and Additional Psychiatric Comorbidity
 
 ## Overview
 
-This repository contains the **working analysis code** used in the study:
+This repository contains the analysis scripts used to derive heart-rate-variability (HRV) features from corrected M-ECG RR intervals and to run the Random Forest classification pipeline used in the study.
 
-**"Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Individuals With and Without Comorbid PTSD"** 
+The workflow is divided into two stages:
 
-The project investigates whether multivariate machine‑learning models applied to **heart rate variability (HRV)** features extracted from **MEG-derived electrocardiogram (M‑ECG)** signals can differentiate Veterans with **TBI alone** from those with **comorbid PTSD (TBI+PTSD)**.
+1. **HRV feature extraction** from corrected RR intervals across time-domain, frequency-domain, geometric, and nonlinear domains.
+2. **Random Forest classification and interpretation** using nested cross-validation, training-fold correlation filtering, Boruta feature selection, hyperparameter tuning, bootstrap confidence intervals, and SHAP analysis.
 
-Rather than relying on isolated univariate HRV comparisons, this pipeline extracts **time-domain, frequency-domain, geometric, and nonlinear HRV metrics** and evaluates their **joint discriminative structure** using **nested cross-validated machine learning**, feature selection, and model interpretability techniques.
+The scripts are designed to be portable and do not contain study-specific local paths or participant identifiers. Dataset-specific paths, metadata column names, optional exclusions, and output locations are supplied at runtime.
 
----
+The repository begins with **corrected RR intervals**. Extraction of M-ECG cardiac signals and RR-interval correction is handled separately by the M-ECG extraction framework:
 
-## Scientific Motivation
-
-TBI and PTSD frequently co-occur and share overlapping symptomatology and autonomic dysfunction. Traditional HRV analyses often fail to detect robust group differences after correction for multiple comparisons. This project demonstrates that:
-
-**Multivariate HRV patterns** carry diagnostically relevant information even when univariate HRV effects are weak or absent.
-
-
-**Machine learning models** can uncover distributed autonomic signatures linked to comorbidity.
-
-
-
-Manuscript Link:
-
-DOI: [To be added]
-
-PMID: [To be added]
-
-The code here reflects the **exact feature-generation backbone** and **statistical modeling pipeline** that supports downstream inference and interpretation.
-
----
-
-## Dataset Summary
-
-**Population**: Veterans (drawn from the Chronic Effects of Neurotrauma Consortium Study 34).
-
-
-* **Groups**:
-    * TBI only (TBI-alone): *n = 42* 
-
-
-    * TBI + PTSD: *n = 40* 
-
-
-
-
-**Signal Source**: M-ECG 
-
-
-**Condition**: Resting state (5 minutes) 
-
-
-* **RR Interval Format**:
-    * Pickled NumPy arrays
-    * Shape: `(N, 2)`
-    * Column 0: cumulative time (seconds)
-    * Column 1: RR intervals (seconds)
-
-
-
-
+https://github.com/izadysadr/MEG-HRV-Extraction
 
 ---
 
@@ -74,204 +24,315 @@ The code here reflects the **exact feature-generation backbone** and **statistic
 ├── 01_extract_hrv_time.py
 ├── 02_extract_hrv_frequency.py
 ├── 03_extract_hrv_nonlinear.py
-├── 04_ml_classification_pipeline.py
+├── 04_ml_classification_pipeline_rf.py
 ├── LICENSE
-├── README.md
-
+└── README.md
 ```
 
-The scripts are sequentially numbered to reflect the execution order. The first three compute distinct classes of HRV features and output subject-level CSV files. The fourth script ingests these CSVs alongside clinical demographics to run the machine-learning pipeline.
+The first three scripts generate the **18 HRV features used in the analysis**. The fourth script merges those feature files with a metadata table and runs the Random Forest classification pipeline.
 
 ---
 
-## Script Descriptions & Usage
+## Input RR-Interval Format
 
-All scripts are configured for command-line execution, utilizing `argparse` to handle input directories and output destinations cleanly.
+The three HRV extraction scripts expect pre-corrected RR interval files with names matching:
+
+```text
+*_rr_intervals_corrected.np.pkl
+```
+
+Each file should contain a two-column NumPy array:
+
+```text
+Column 0: cumulative time / time stamp in seconds
+Column 1: corrected RR interval in seconds
+```
+
+The extraction scripts recursively discover matching files beneath the supplied input directory.
+
+---
+
+## HRV Features Used in the Analysis
+
+The current scripts compute and export only the 18 HRV features used by the classification pipeline.
+
+### Time-domain features (3)
+
+* Mean RR interval (ms)
+* SDNN (ms)
+* RMSSD (ms)
+
+### Frequency-domain features (9)
+
+* VLF absolute power (ms²)
+* LF absolute power (ms²)
+* HF absolute power (ms²)
+* LF relative power (% total power)
+* HF relative power (% total power)
+* LF/HF ratio
+* Total power (ms²)
+* LF peak frequency (Hz)
+* HF peak frequency (Hz)
+
+### Geometric and nonlinear features (6)
+
+* SD1 (ms)
+* SD2 (ms)
+* SD1/SD2 ratio
+* Approximate entropy (ApEn)
+* Sample entropy (SampEn)
+* DFA α1
+
+---
+
+## Script Descriptions and Usage
 
 ### 1. Time-Domain HRV Extraction
 
-**File**: `01_extract_hrv_time.py`
+**File:** `01_extract_hrv_time.py`
 
-Computes classical time-domain HRV metrics from corrected RR intervals.
+Computes the three time-domain variables used in the study directly from corrected RR intervals:
 
-**Metrics extracted**:
+* Mean RR interval
+* SDNN
+* RMSSD
 
-* Mean RR interval (ms), Mean heart rate (bpm), SDNN (ms), RMSSD (ms), SDSD (ms), NN50 count, pNN50 (%)
-
-**Usage**:
-
-```bash
-python 01_extract_hrv_time.py -i /path/to/data -o /path/to/save/time_domain_hrv_metrics.csv
-
-```
-
-### 2. Frequency-Domain HRV Extraction
-
-**File**: `02_extract_hrv_frequency.py`
-
-Computes spectral HRV features using RR-interval-based power spectral density estimation (Welch's method) bounded to standard physiological ranges (0–0.4 Hz).
-
-**Metrics extracted**:
-
-* Absolute and relative power for VLF, LF, and HF bands
-* LF/HF ratio
-* LF and HF peak frequencies (Hz)
-* Total power
-
-**Usage**:
+**Usage:**
 
 ```bash
-python 02_extract_hrv_frequency.py -i /path/to/data -o /path/to/save/frequency_domain_hrv_metrics.csv
-
-```
-
-### 3. Poincaré & Nonlinear HRV Extraction
-
-**File**: `03_extract_hrv_nonlinear.py`
-
-Computes nonlinear and geometric HRV measures sensitive to **complexity, irregularity, and fractal structure**.
-
-**Metrics extracted**:
-
-* **Poincaré Metrics**: SD1, SD2, SD1/SD2 ratio, Ellipse area (S)
-* **Nonlinear Metrics**: Approximate Entropy (ApEn), Sample Entropy (SampEn), Detrended Fluctuation Analysis (DFA α1)
-
-**Usage**:
-
-```bash
-python 03_extract_hrv_nonlinear.py -i /path/to/data -o /path/to/save/non_linear_hrv_metrics.csv
-
-```
-
-### 4. Machine Learning Classification Pipeline
-
-**File**: `04_ml_classification_pipeline.py`
-
-Ingests the previously generated HRV metrics alongside clinical demographic data to execute a rigorous, leakage-free modeling pipeline.
-
-**Core Pipeline Features**:
-
-   **Nested Cross-Validation**: 5-fold outer CV for evaluation; repeated 3-fold inner CV for hyperparameter tuning.
-   
-   
-   **Feature Selection**: Correlation-based redundancy filtering followed by all-relevant wrapper-based selection using Boruta.
-   
-   
-   **Classification**: Optimized XGBoost and Random Forest models.
-   
-   
-   **Statistical Inference**: Exact paired permutation testing for AUC comparison, and nonparametric bootstrapping (n=10,000) for 95% confidence intervals.
-   
-   
-   **Explainability**: SHapley Additive exPlanations (SHAP) pooled across test folds for global feature importance and dependence visualization.
-
-
-
-**Usage**:
-
-```bash
-python 04_ml_classification_pipeline.py \
-    --demo_file /path/to/demographics.xlsx \
-    --metrics_dir /path/to/HRV_metrics_folder \
-    --output_dir /path/to/save/results
-
+python 01_extract_hrv_time.py \\
+    -i /path/to/corrected_rr_intervals \\
+    -o "/path/to/hrv_metrics/time domain hrv metrics.csv"
 ```
 
 ---
 
-## Key Findings (Project Context)
+### 2. Frequency-Domain HRV Extraction
 
-* Both Random Forest and XGBoost classifiers achieved above-chance discrimination (Random Forest AUC = 0.663; XGBoost AUC = 0.635).
+**File:** `02_extract_hrv_frequency.py`
 
+Performs frequency-domain analysis from corrected RR intervals. RR intervals are converted to milliseconds and resampled to **850 evenly spaced points using cubic-spline interpolation**. Power spectral density is estimated over **0–0.4 Hz using Welch's method**.
 
-* Informative features driving the models included:
-* Altered sympathovagal balance (LF/HF ratio) 
+Frequency bands are defined as:
 
+* VLF: 0.003–0.04 Hz
+* LF: 0.04–0.15 Hz
+* HF: 0.15–0.40 Hz
 
-* Increased low-frequency proportion (LF % total power) 
+Absolute band powers are obtained by trapezoidal integration of the PSD. Total power is defined as VLF + LF + HF band power, and LF and HF relative power are calculated as percentages of that total. The script also derives the LF/HF ratio and LF/HF peak frequencies.
 
+**Usage:**
 
-* Greater heart rate complexity (ApEn) 
+```bash
+python 02_extract_hrv_frequency.py \\
+    -i /path/to/corrected_rr_intervals \\
+    -o "/path/to/hrv_metrics/frequency domain hrv metrics.csv"
+```
 
+---
 
+### 3. Geometric and Nonlinear HRV Extraction
 
+**File:** `03_extract_hrv_nonlinear.py`
 
-* Univariate HRV differences were subtle and did **not survive multiple-comparison correction** (FDR-adjusted p ≥ 0.13), highlighting the necessity of the multivariate approach.
+Computes the geometric and nonlinear variables used in the analysis:
 
+* SD1
+* SD2
+* SD1/SD2 ratio
+* Approximate entropy (ApEn)
+* Sample entropy (SampEn)
+* DFA α1
 
+Entropy calculations use an embedding dimension of **2**. When no tolerance is supplied, the tolerance is set to **0.2 × the standard deviation of the RR series**. DFA α1 is calculated over scales of **4–16 beats**.
+
+**Usage:**
+
+```bash
+python 03_extract_hrv_nonlinear.py \\
+    -i /path/to/corrected_rr_intervals \\
+    -o "/path/to/hrv_metrics/non-linear HRV metrics.csv"
+```
+
+Using the three output filenames shown above allows the machine-learning script to use its default metric-file settings. Alternative filenames can also be supplied to the machine-learning script through command-line arguments.
+
+---
+
+### 4. Random Forest Classification Pipeline
+
+**File:** `04_ml_classification_pipeline_rf.py`
+
+Runs the Random Forest-only classification and interpretation pipeline. The script is intentionally generic: metadata column names, subject identifier, exclusions, file locations, and metric filenames are supplied at runtime rather than embedded in the source code.
+
+The pipeline includes:
+
+* Five-fold stratified **outer cross-validation** for held-out model evaluation
+* Repeated stratified **3-fold × 5-repeat inner cross-validation** for hyperparameter tuning
+* Median imputation, when required, fitted only within each training fold
+* Training-fold **Spearman correlation filtering** at `|ρ| > 0.90`
+* Training-fold **Boruta feature selection**, retaining confirmed and tentative features
+* Random Forest hyperparameter tuning with `GridSearchCV`
+* Held-out predictions and probabilities from each outer fold
+* ROC AUC, accuracy, precision, recall, F1-score, and a pooled confusion-matrix summary
+* **10,000-sample bootstrap confidence intervals** for pooled performance metrics
+* VIF summaries for features selected across folds
+* Held-out **SHAP** analysis and bootstrap summaries of mean absolute SHAP importance
+* Global SHAP violin/bar plots and dependence plots for selected features
+* High-resolution LZW-compressed TIFF figure output
+
+#### Cohort configuration
+
+The metadata table must contain a subject-ID column and four binary columns supplied through the following arguments:
+
+* `--group_status_column`
+* `--primary_condition_column`
+* `--comorbidity_column`
+* `--lifetime_status_column`
+
+The existing analysis logic constructs:
+
+```text
+Group 0: group_status = 0, primary_condition = 1,
+         comorbidity = 0, lifetime_status = 0
+
+Group 1: group_status = 1, primary_condition = 1,
+         comorbidity = 1, lifetime_status = 1
+```
+
+Group 0 receives target label `0`; Group 1 receives target label `1`.
+
+#### Required usage
+
+```bash
+python 04_ml_classification_pipeline_rf.py \\
+    --demo_file /path/to/metadata.xlsx \\
+    --metrics_dir /path/to/hrv_metrics \\
+    --output_dir /path/to/results \\
+    --group_status_column group_status \\
+    --primary_condition_column primary_condition \\
+    --comorbidity_column comorbidity_status \\
+    --lifetime_status_column lifetime_status
+```
+
+#### Common optional arguments
+
+```text
+--id_column SUBJECT_ID
+--age_column age
+--sex_column sex
+--exclude_ids ID001 ID002 ...
+--time_metrics_file "time domain hrv metrics.csv"
+--frequency_metrics_file "frequency domain hrv metrics.csv"
+--nonlinear_metrics_file "non-linear HRV metrics.csv"
+```
+
+`--age_column` and `--sex_column` are optional and are used only for descriptive console summaries. `--exclude_ids` allows exclusions to be supplied at runtime without embedding participant identifiers in the public script.
+
+Use:
+
+```bash
+python 04_ml_classification_pipeline_rf.py --help
+```
+
+for the complete command-line interface.
+
+---
+
+## Machine-Learning Feature Set
+
+The classification script expects the 18 HRV variables generated by scripts 01–03 and renames them internally to concise display names before modeling.
+
+No age or sex variable is included in the model feature matrix by default. Optional age and sex arguments are used only for descriptive output.
+
+---
+
+## SHAP Analysis
+
+SHAP values are computed only for **held-out outer-fold observations** using the Random Forest model trained within that fold.
+
+Because Boruta may retain different features across folds, global SHAP aggregation aligns features across outer folds. A feature that was absent from a fold's fitted model contributes a structural zero SHAP value for observations from that fold. Observed held-out feature values are retained separately for visualization.
+
+Dependence plots include only held-out observations from folds in which the focal feature was actually retained by Boruta, preventing structural-zero SHAP values from being interpreted as genuine focal-feature relationships.
+
+---
+
+## Outputs
+
+Depending on the supplied data and selected features, the Random Forest pipeline saves the following high-resolution, LZW-compressed TIFF figures:
+
+* ROC curve
+* SHAP violin plot
+* SHAP mean-absolute-importance bar plot
+* SHAP dependence plots for selected features
+
+The script also prints analysis summaries to the console, including:
+
+* Fold-wise model-performance summaries
+* Bootstrap confidence intervals for pooled performance metrics
+* Feature-selection frequencies
+* Correlation-filter drop frequencies
+* Pooled confusion-matrix summary
+* VIF summary
+* Bootstrapped SHAP importance summaries
 
 ---
 
 ## Dependencies
 
-### Required Python Version
+### Python
 
-* Python ≥ 3.8 *(Recommended: Python ≥ 3.9 for full compatibility with scientific libraries)*
+Python 3.9+ is recommended.
 
 ### Installation
 
-To install all required dependencies, run:
-
 ```bash
-pip install numpy scipy pandas matplotlib seaborn statsmodels mne antropy nolds scikit-learn xgboost shap boruta
-
+pip install numpy pandas scipy matplotlib seaborn statsmodels mne antropy nolds scikit-learn shap boruta openpyxl
 ```
 
-**Library Roles**:
+`openpyxl` is required when reading `.xlsx` metadata files with pandas.
 
-**Neurophysiology / Signal Processing**: `mne` 
+### Main library roles
 
-
-**Nonlinear Dynamics**: `antropy`, `nolds` 
-
-
-**Machine Learning**: `scikit-learn`, `xgboost`, `boruta` 
-
-
-**Interpretability & Stats**: `shap`, `statsmodels`, `scipy` 
-
-
-**Standard Libraries** (built-in): `os`, `re`, `pickle`, `pathlib`, `logging`, `warnings`, `itertools`, `typing`
+* **Numerical/data handling:** `numpy`, `pandas`, `scipy`
+* **Frequency-domain HRV:** `mne`
+* **Nonlinear HRV:** `antropy`, `nolds`
+* **Machine learning:** `scikit-learn`, `boruta`
+* **Interpretability:** `shap`
+* **Statistics:** `statsmodels`, `scipy`
+* **Visualization:** `matplotlib`, `seaborn`
+* **Excel input:** `openpyxl`
 
 ---
 
 ## Reproducibility Notes
 
-* All extraction scripts operate on **pre-corrected RR intervals**.
-* No subject labels or paths are hard-coded; all file discovery is dynamic.
-* Random seeds (e.g., `RANDOM_STATE = 42`) are strictly enforced throughout the ML pipeline for CV splits, Boruta shadow features, model initialization, and bootstrapping to guarantee reproducibility.
+* Scripts 01–03 operate on **pre-corrected RR intervals** and do not perform M-ECG extraction or participant-specific R-peak quality control.
+* The extraction scripts compute/export only the **18 HRV features used by the classification analysis**.
+* The machine-learning script contains no embedded local data paths or participant IDs.
+* Optional subject exclusions are provided at runtime.
+* The Random Forest analysis uses a fixed random state of `42` for reproducible cross-validation, feature selection, model fitting, and bootstrap procedures where applicable.
+* Imputation, correlation filtering, Boruta feature selection, and hyperparameter tuning are performed using training data within the nested cross-validation structure to avoid leakage into held-out outer folds.
+* SHAP explanations are calculated from held-out outer-fold observations rather than training observations.
 
+---
 
-* The ML pipeline isolates imputation, correlation filtering, and feature selection entirely within the training folds to strictly prevent data leakage.
+## Data Availability and Privacy
 
+This repository contains analysis code only. Raw participant data and corrected participant-level RR interval files are not distributed with the repository.
 
+Users applying the workflow to their own data should ensure that their metadata and RR-interval files follow the formats described above and that they have appropriate authorization to use those data.
 
 ---
 
 ## Intended Use
 
-This repository is intended for:
+This repository is intended for methodological replication and research involving:
 
-* Neurocardiac and psychophysiological research
-* HRV feature engineering for machine learning
-* M-ECG analysis pipelines
-* Methodological replication and extension
+* Heart-rate-variability feature extraction
+* M-ECG-derived RR interval analysis
+* Multivariate HRV classification
+* Nested cross-validation and feature-selection workflows
+* Random Forest interpretation using SHAP
 
-*It is **not** intended for clinical diagnosis.*
+It is not intended for clinical diagnosis or clinical decision-making.
 
----
-
-## Citation
-
-If you use or adapt this code, please cite the associated manuscript and acknowledge the original author:
-
-[To be added]
-
-DOI: [To be added]
-
----
-
-## Author
-
-**Aqil Izadysadr** Department of Neurology, Wake Forest School of Medicine 
-Neurocardiac Signal Analysis & Machine Learning

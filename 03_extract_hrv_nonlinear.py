@@ -17,7 +17,6 @@ Heart Rate Variability (HRV) metrics from preprocessed RR interval data.
    - SD1: short-term variability
    - SD2: long-term variability
    - SD1/SD2 ratio
-   - Ellipse area (S)
 
 2. **Nonlinear HRV Analysis**:
    - Approximate Entropy (ApEn)
@@ -96,8 +95,7 @@ def compute_and_plot_poincare(
         Dict[str, float]: A dictionary containing the computed metrics:
             - SD1: Standard deviation perpendicular to the line of identity.
             - SD2: Standard deviation along the line of identity.
-            - SD1/SD2: Ratio indicating autonomic balance.
-            - S: Total area of the fitted ellipse.
+            - SD1/SD2: Ratio of short- to long-term variability.
     """
     # Extract RR intervals from the second column
     rr = rr_array[:, 1]
@@ -118,9 +116,8 @@ def compute_and_plot_poincare(
     SD1 = np.sqrt(np.var(diff) / 2)
     SD2 = np.sqrt(2 * np.var(rr) - (np.var(diff) / 2))
     
-    # Calculate autonomic balance ratio and total phase space area
+    # Calculate the SD1/SD2 ratio used in the manuscript
     ratio = SD1 / SD2 if SD2 != 0 else np.nan
-    S = np.pi * SD1 * SD2
 
     # ----- Standard Plot -----
     if plot_standard:
@@ -151,8 +148,8 @@ def compute_and_plot_poincare(
         max_rr = max(max(rr_n), max(rr_n1))
         axs[0].plot([min_rr, max_rr], [min_rr, max_rr], 'k--', alpha=0.5)
 
-        # Bar plot summarizing geometric metrics
-        axs[1].bar(['SD1', 'SD2', 'SD1/SD2', 'S'], [SD1, SD2, ratio, S], color=['C0', 'C1', 'C2', 'C3'])
+        # Bar plot summarizing the geometric metrics used in the manuscript
+        axs[1].bar(['SD1', 'SD2', 'SD1/SD2'], [SD1, SD2, ratio], color=['C0', 'C1', 'C2'])
         axs[1].set_title("Computed Metrics")
         axs[1].set_ylabel("Value")
 
@@ -166,8 +163,7 @@ def compute_and_plot_poincare(
     return {
         'SD1': float(SD1),
         'SD2': float(SD2),
-        'SD1/SD2': float(ratio),
-        'S': float(S)
+        'SD1/SD2': float(ratio)
     }
 
 
@@ -356,7 +352,6 @@ def process_nonlinear_hrv_data(input_dir: str, output_csv: str) -> None:
             "SD1 (ms)": poincare_metrics['SD1'],
             "SD2 (ms)": poincare_metrics['SD2'],
             "SD1/SD2 ratio": poincare_metrics['SD1/SD2'],
-            "S (ellipse area) (ms²)": poincare_metrics['S'],
             "approximate entropy (ApEn)": nonlinear_metrics['ApEn'],
             "sample entropy (SampEn)": nonlinear_metrics['SampEn'],
             "DFA α1": nonlinear_metrics['DFA_alpha1']

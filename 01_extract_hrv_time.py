@@ -16,14 +16,10 @@ The results are consolidated into a CSV file for downstream analyses.
 
 Key Features:
 -------------
-1. Computes time-domain HRV metrics for each subject:
+1. Computes the time-domain HRV metrics used in the manuscript:
    - Mean RR interval (ms)
-   - Mean heart rate (bpm)
    - SDNN (ms)
    - RMSSD (ms)
-   - SDSD (ms)
-   - NN50 count
-   - pNN50 (%)
 2. Handles multiple subjects automatically via directory traversal.
 3. Memory-optimized for large cohort scaling.
 4. Outputs results into a structured CSV file for further analysis.
@@ -69,8 +65,7 @@ logger = logging.getLogger(__name__)
 
 def compute_time_domain_metrics_ms(rr_array: np.ndarray) -> tuple:
     """
-    Compute standard time-domain heart rate variability (HRV) metrics 
-    from an RR interval array.
+    Compute the time-domain HRV metrics used in the manuscript from an RR interval array.
 
     Parameters
     ----------
@@ -83,50 +78,18 @@ def compute_time_domain_metrics_ms(rr_array: np.ndarray) -> tuple:
     -------
     mean_rr_ms : float
         Mean RR interval in milliseconds.
-    mean_hr_bpm : float
-        Mean heart rate in beats per minute (bpm), computed as 60,000 / mean RR.
     sdnn_ms : float
         Standard deviation of RR intervals (SDNN) in milliseconds.
     rmssd_ms : float
         Root mean square of successive differences (RMSSD) in milliseconds.
-    sdsd_ms : float
-        Standard deviation of successive differences (SDSD) in milliseconds.
-    nn50_count : int
-        Number of successive RR interval differences greater than 50 ms.
-    pnn50_percent : float
-        Percentage of NN50 counts relative to total number of successive differences.
     """
-    # Extract RR intervals (in seconds) from column 1
     rr_seconds = rr_array[:, 1]
-
-    # Convert RR intervals to milliseconds for standard HRV metrics
     rr_ms = rr_seconds * 1000
-
-    # Mean RR interval in ms
-    mean_rr = np.mean(rr_ms)  
-
-    # Mean heart rate in beats per minute (bpm)
-    mean_hr = 60000 / mean_rr  
-
-    # Standard deviation of RR intervals (ms) — reflects overall HRV
-    sdnn = np.std(rr_ms, ddof=1)  
-
-    # Successive differences between RR intervals
+    mean_rr = np.mean(rr_ms)
+    sdnn = np.std(rr_ms, ddof=1)
     diff_rr = np.diff(rr_ms)
-
-    # Root mean square of successive differences (ms) — reflects short-term HRV
-    rmssd = np.sqrt(np.mean(diff_rr ** 2))  
-
-    # Standard deviation of successive differences (ms)
-    sdsd = np.std(diff_rr, ddof=1)  
-
-    # Count of successive differences greater than 50 ms
-    nn50 = np.sum(np.abs(diff_rr) > 50)
-
-    # Percentage of NN50 relative to total number of successive differences
-    pnn50 = (nn50 / len(diff_rr)) * 100 if len(diff_rr) > 0 else 0.0
-
-    return mean_rr, mean_hr, sdnn, rmssd, sdsd, nn50, pnn50
+    rmssd = np.sqrt(np.mean(diff_rr ** 2))
+    return mean_rr, sdnn, rmssd
 
 
 def process_hrv_data(input_dir: str, output_csv: str) -> None:
@@ -171,7 +134,7 @@ def process_hrv_data(input_dir: str, output_csv: str) -> None:
             continue
 
         # Compute Metrics
-        mean_rr, mean_hr, sdnn, rmssd, sdsd, nn50, pnn50 = compute_time_domain_metrics_ms(rr_corrected)
+        mean_rr, sdnn, rmssd = compute_time_domain_metrics_ms(rr_corrected)
 
         logger.info(f"[{counter}/{len(matching_files)}] Processed: {subject_id}")
         logger.debug(f"{subject_id} Metrics - mean_rr: {mean_rr:.2f}, rmssd: {rmssd:.2f}, sdnn: {sdnn:.2f}")
@@ -180,12 +143,8 @@ def process_hrv_data(input_dir: str, output_csv: str) -> None:
         results_list.append({
             'SUBJECT_ID': subject_id,
             'mean_rr_ms - resting state': mean_rr,
-            'mean_hr_bpm - resting state': mean_hr,
             'sdnn_ms - resting state': sdnn,
-            'rmssd_ms - resting state': rmssd,
-            'sdsd_ms - resting state': sdsd,
-            'nn50_count - resting state': nn50,
-            'pnn50_percent - resting state': pnn50
+            'rmssd_ms - resting state': rmssd
         })
 
     # Construct DataFrame once at the end
