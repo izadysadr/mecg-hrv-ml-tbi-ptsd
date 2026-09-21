@@ -336,3 +336,11 @@ This repository is intended for methodological replication and research involvin
 
 It is not intended for clinical diagnosis or clinical decision-making.
 
+---
+
+## Citation
+If you use this code in your research, please cite the corresponding manuscript:
+
+Izadysadr, A., Bagherzadeh, H. S., Rowland, J., Martindale, S. L., Stapleton-Kotloski, J. R., & Godwin, D. W. (2026). Multivariate Machine Learning Analysis of M-ECG-derived Heart Rate Variability in TBI Veterans, With and Without Comorbid PTSD. medRxiv, 2026-06.
+
+DOI: https://doi.org/10.64898/2026.06.05.26354915
