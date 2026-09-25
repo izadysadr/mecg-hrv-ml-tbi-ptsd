@@ -9,7 +9,7 @@ The workflow is divided into two stages:
 1. **HRV feature extraction** from corrected RR intervals across time-domain, frequency-domain, geometric, and nonlinear domains.
 2. **Random Forest classification and interpretation** using nested cross-validation, training-fold correlation filtering, Boruta feature selection, hyperparameter tuning, bootstrap confidence intervals, and SHAP analysis.
 
-The scripts are designed to be portable and do not contain study-specific local paths or participant identifiers. Dataset-specific paths, metadata column names, optional exclusions, and output locations are supplied at runtime.
+The scripts are designed to be portable and do not contain study-specific local paths or participant identifiers. Dataset-specific paths, the subject-ID column, the binary analysis-group column, and output locations are supplied at runtime.
 
 The repository begins with **corrected RR intervals**. Extraction of M-ECG cardiac signals and RR-interval correction is handled separately by the M-ECG extraction framework:
 
