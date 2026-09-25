@@ -19,18 +19,15 @@ at runtime and are not embedded in the script.
 
 Usage:
 ------
-python 04_ml_classification_pipeline_rf_only_generic.py \
+python 04_ml_classification_pipeline_rf.py \
     --demo_file /path/to/metadata.xlsx \
     --metrics_dir /path/to/hrv_metrics \
     --output_dir /path/to/results \
-    --group_status_column group_status \
-    --primary_condition_column primary_condition \
-    --comorbidity_column comorbidity_status \
-    --lifetime_status_column lifetime_status
+    --group_column analysis_group
 
-Optional arguments allow the subject-ID column, metric filenames, demographic
-summary columns, and excluded subject IDs to be specified without editing the
-script.
+Optional arguments allow the subject-ID column, metric filenames, age/sex
+column names for sensitivity analyses, and excluded subject IDs to be supplied
+without embedding dataset-specific details in the script.
 
 Expected default metric filenames inside --metrics_dir:
     - time domain hrv metrics.csv
@@ -81,40 +78,25 @@ parser.add_argument(
     help="Subject identifier column shared by the metadata and HRV metric files."
 )
 parser.add_argument(
-    "--group_status_column",
+    "--group_column",
     type=str,
     required=True,
-    help="Binary status column used as 0 for group 0 and 1 for group 1."
-)
-parser.add_argument(
-    "--primary_condition_column",
-    type=str,
-    required=True,
-    help="Binary inclusion column required to equal 1 in both groups."
-)
-parser.add_argument(
-    "--comorbidity_column",
-    type=str,
-    required=True,
-    help="Binary column required to equal 0 in group 0 and 1 in group 1."
-)
-parser.add_argument(
-    "--lifetime_status_column",
-    type=str,
-    required=True,
-    help="Binary column required to equal 0 in group 0 and 1 in group 1."
+    help=(
+        "Pre-defined binary analysis-group column. Values 0 and 1 are treated "
+        "as Group 1 and Group 2, respectively."
+    )
 )
 parser.add_argument(
     "--age_column",
     type=str,
     default=None,
-    help="Optional age column used only for descriptive console output."
+    help="Optional metadata column containing age for the age sensitivity analysis."
 )
 parser.add_argument(
     "--sex_column",
     type=str,
     default=None,
-    help="Optional sex column used only for descriptive console output."
+    help="Optional metadata column containing sex for the sex sensitivity analysis."
 )
 parser.add_argument(
     "--exclude_ids",
@@ -149,10 +131,7 @@ output_dir = Path(args.output_dir)
 output_dir.mkdir(parents=True, exist_ok=True)
 
 id_column = args.id_column
-group_status_column = args.group_status_column
-primary_condition_column = args.primary_condition_column
-comorbidity_column = args.comorbidity_column
-lifetime_status_column = args.lifetime_status_column
+group_column = args.group_column
 
 # Keep save_dir as a string because the plotting helper uses os.path.join.
 save_dir = str(output_dir)
@@ -209,17 +188,14 @@ import shap
 # ----------------------------
 # --- Load Data ---
 # ----------------------------
-df = pd.read_excel(demo_file, sheet_name=0)
+metadata = pd.read_excel(demo_file, sheet_name=0)
 
 # Validate configured metadata columns before cohort construction.
 required_metadata_columns = {
     id_column,
-    group_status_column,
-    primary_condition_column,
-    comorbidity_column,
-    lifetime_status_column,
+    group_column,
 }
-missing_metadata_columns = sorted(required_metadata_columns.difference(df.columns))
+missing_metadata_columns = sorted(required_metadata_columns.difference(metadata.columns))
 if missing_metadata_columns:
     raise ValueError(
         "Metadata file is missing required column(s): "
@@ -252,45 +228,30 @@ df_all_metrics = (
 df_all_metrics = df_all_metrics.drop_duplicates(subset=id_column)
 
 # Merge HRV metrics with the metadata table.
-df_merged = pd.merge(df, df_all_metrics, on=id_column, how='right')
+data = pd.merge(metadata, df_all_metrics, on=id_column, how='right')
 
 # ----------------------------
 # --- Optional Subject Exclusions ---
 # ----------------------------
 if args.exclude_ids:
-    df_merged = df_merged[~df_merged[id_column].astype(str).isin(set(args.exclude_ids))]
+    data = data[~data[id_column].astype(str).isin(set(args.exclude_ids))]
 
 # ----------------------------
 # --- Construct Binary Cohorts ---
 # ----------------------------
-group0_merged = df_merged[
-    (df_merged[group_status_column] == 0) &
-    (df_merged[primary_condition_column] == 1) &
-    (df_merged[comorbidity_column] == 0) &
-    (df_merged[lifetime_status_column] == 0)
-]
+# Group definitions are supplied in the metadata through a pre-defined binary
+# analysis-group column. The clinical criteria used to derive those groups are
+# described in the corresponding manuscript rather than embedded here.
+group_1 = data[data[group_column] == 0].copy()
+group_2 = data[data[group_column] == 1].copy()
 
-print(f"Group 0: {len(group0_merged)}")
+if group_1.empty or group_2.empty:
+    raise ValueError(
+        "The configured group column must contain both binary values 0 and 1."
+    )
 
-group1_merged = df_merged[
-    (df_merged[group_status_column] == 1) &
-    (df_merged[primary_condition_column] == 1) &
-    (df_merged[comorbidity_column] == 1) &
-    (df_merged[lifetime_status_column] == 1)
-]
-
-print(f"Group 1: {len(group1_merged)}")
-
-# Optional descriptive summaries. These do not affect model fitting.
-if args.age_column is not None and args.age_column in group1_merged.columns:
-    print("Group 1 average age:", group1_merged[args.age_column].mean())
-
-if args.sex_column is not None and args.sex_column in group1_merged.columns:
-    print("Group 1 sex distribution (%):")
-    print((group1_merged[args.sex_column].value_counts(normalize=True) * 100).round(2))
-
-# Store merged columns
-columns = df_merged.columns
+print(f"Group 1: {len(group_1)}")
+print(f"Group 2: {len(group_2)}")
 
 # ----------------------------
 # --- Fix for NumPy Deprecation Warnings ---
@@ -353,8 +314,8 @@ sns.set(style="whitegrid")
 
 # Combine groups and assign target labels
 model_data = pd.concat([
-    group1_merged.assign(target=1),
-    group0_merged.assign(target=0)
+    group_1.assign(target=0),
+    group_2.assign(target=1)
 ], ignore_index=True)
 
 # Original HRV columns
@@ -362,8 +323,6 @@ original_columns = hrv_columns
 
 # New, user-friendly names
 new_names = [
-    # "Sex",
-    # "Age",
     "Mean RR (ms)",
     "SDNN (ms)",
     "RMSSD (ms)",
@@ -387,11 +346,29 @@ new_names = [
 # Create mapping dictionary
 rename_dict = dict(zip(original_columns, new_names))
 
-# Rename columns in the merged dataset
+# Map optional demographic fields to generic names for sensitivity analyses.
+if args.sex_column is not None:
+    if args.sex_column not in model_data.columns:
+        raise ValueError(f"Sex column not found: {args.sex_column}")
+    rename_dict[args.sex_column] = "Sex"
+
+if args.age_column is not None:
+    if args.age_column not in model_data.columns:
+        raise ValueError(f"Age column not found: {args.age_column}")
+    rename_dict[args.age_column] = "Age"
+
+# Rename columns in the analysis dataset
 model_data = model_data.rename(columns=rename_dict)
 
-# Select HRV columns (using new names) for modeling
-X_full = model_data[new_names]
+# Primary analysis: 18 HRV features only.
+# For a sensitivity analysis, uncomment ONE of the following lines and rerun
+# the same pipeline (and supply the corresponding --sex_column or --age_column).
+model_features = new_names.copy()
+# model_features = ["Sex"] + new_names
+# model_features = ["Age"] + new_names
+
+# Select candidate features for modeling
+X_full = model_data[model_features]
 y_full = model_data['target']
 random_state = 42
 
