@@ -7,15 +7,14 @@ Author:      AQIL IZADYSADR
 
 Description:
 ------------
-Production-ready Random Forest pipeline for binary classification using HRV
-features. The script performs cohort construction, nested cross-validation,
-training-fold correlation filtering, Boruta feature selection, Random Forest
-hyperparameter tuning, held-out prediction, SHAP analysis, bootstrap confidence
-intervals, VIF assessment, and high-resolution
-figure generation.
+Random Forest pipeline for binary classification using HRV features. The script
+performs cohort construction, nested cross-validation, training-fold correlation
+filtering, Boruta feature selection, Random Forest hyperparameter tuning, held-out
+prediction, SHAP analysis, bootstrap confidence intervals, VIF assessment, and
+high-resolution figure generation.
 
-Dataset-specific identifiers, column names, exclusions, and paths are supplied
-at runtime and are not embedded in the script.
+Dataset-specific file paths, the subject-ID column, and the binary analysis-group
+column are supplied at runtime and are not embedded in the script.
 
 Usage:
 ------
@@ -25,11 +24,9 @@ python 04_ml_classification_pipeline_rf.py \
     --output_dir /path/to/results \
     --group_column analysis_group
 
-Optional arguments allow the subject-ID column, metric filenames, age/sex
-column names for sensitivity analyses, and excluded subject IDs to be supplied
-without embedding dataset-specific details in the script.
+The subject-ID column can optionally be specified if it differs from the default.
 
-Expected default metric filenames inside --metrics_dir:
+Expected metric filenames inside --metrics_dir:
     - time domain hrv metrics.csv
     - frequency domain hrv metrics.csv
     - non-linear HRV metrics.csv
@@ -51,76 +48,37 @@ from pathlib import Path
 # --- Command-Line Inputs ---
 # ============================
 parser = argparse.ArgumentParser(
-    description="Run a Random Forest HRV binary-classification pipeline."
+    description="Run the Random Forest HRV binary-classification pipeline."
 )
 parser.add_argument(
     "-d", "--demo_file",
     type=str,
     required=True,
-    help="Path to the metadata/demographics Excel file."
+    help="Path to the metadata file."
 )
 parser.add_argument(
     "-m", "--metrics_dir",
     type=str,
     required=True,
-    help="Directory containing the HRV metric CSV files."
+    help="Directory containing the HRV metric files."
 )
 parser.add_argument(
     "-o", "--output_dir",
     type=str,
     required=True,
-    help="Directory in which plots and statistical outputs will be saved."
+    help="Directory in which analysis outputs will be saved."
 )
 parser.add_argument(
     "--id_column",
     type=str,
     default="SUBJECT_ID",
-    help="Subject identifier column shared by the metadata and HRV metric files."
+    help="Identifier column shared by the metadata and HRV metric files."
 )
 parser.add_argument(
     "--group_column",
     type=str,
     required=True,
-    help=(
-        "Pre-defined binary analysis-group column. Values 0 and 1 are treated "
-        "as Group 1 and Group 2, respectively."
-    )
-)
-parser.add_argument(
-    "--age_column",
-    type=str,
-    default=None,
-    help="Optional metadata column containing age for the age sensitivity analysis."
-)
-parser.add_argument(
-    "--sex_column",
-    type=str,
-    default=None,
-    help="Optional metadata column containing sex for the sex sensitivity analysis."
-)
-parser.add_argument(
-    "--exclude_ids",
-    nargs="*",
-    default=[],
-    help="Optional subject IDs to exclude before cohort construction."
-)
-parser.add_argument(
-    "--time_metrics_file",
-    type=str,
-    default="time domain hrv metrics.csv",
-    help="Filename of the time-domain HRV metric CSV inside --metrics_dir."
-)
-parser.add_argument(
-    "--frequency_metrics_file",
-    type=str,
-    default="frequency domain hrv metrics.csv",
-    help="Filename of the frequency-domain HRV metric CSV inside --metrics_dir."
-)
-parser.add_argument(
-    "--nonlinear_metrics_file",
-    type=str,
-    default="non-linear HRV metrics.csv",
-    help="Filename of the nonlinear/geometric HRV metric CSV inside --metrics_dir."
+    help="Binary analysis-group column (0 = Group 1, 1 = Group 2)."
 )
 
 args = parser.parse_args()
@@ -205,9 +163,13 @@ if missing_metadata_columns:
 # ----------------------------
 # --- Load HRV Metrics ---
 # ----------------------------
-df_non_linear = pd.read_csv(metrics_dir / args.nonlinear_metrics_file)
-df_freq = pd.read_csv(metrics_dir / args.frequency_metrics_file)
-df_time = pd.read_csv(metrics_dir / args.time_metrics_file)
+TIME_METRICS_FILE = "time domain hrv metrics.csv"
+FREQUENCY_METRICS_FILE = "frequency domain hrv metrics.csv"
+NONLINEAR_METRICS_FILE = "non-linear HRV metrics.csv"
+
+df_non_linear = pd.read_csv(metrics_dir / NONLINEAR_METRICS_FILE)
+df_freq = pd.read_csv(metrics_dir / FREQUENCY_METRICS_FILE)
+df_time = pd.read_csv(metrics_dir / TIME_METRICS_FILE)
 
 for metric_name, metric_df in (
     ("time-domain", df_time),
@@ -229,12 +191,6 @@ df_all_metrics = df_all_metrics.drop_duplicates(subset=id_column)
 
 # Merge HRV metrics with the metadata table.
 data = pd.merge(metadata, df_all_metrics, on=id_column, how='right')
-
-# ----------------------------
-# --- Optional Subject Exclusions ---
-# ----------------------------
-if args.exclude_ids:
-    data = data[~data[id_column].astype(str).isin(set(args.exclude_ids))]
 
 # ----------------------------
 # --- Construct Binary Cohorts ---
@@ -346,26 +302,19 @@ new_names = [
 # Create mapping dictionary
 rename_dict = dict(zip(original_columns, new_names))
 
-# Map optional demographic fields to generic names for sensitivity analyses.
-if args.sex_column is not None:
-    if args.sex_column not in model_data.columns:
-        raise ValueError(f"Sex column not found: {args.sex_column}")
-    rename_dict[args.sex_column] = "Sex"
-
-if args.age_column is not None:
-    if args.age_column not in model_data.columns:
-        raise ValueError(f"Age column not found: {args.age_column}")
-    rename_dict[args.age_column] = "Age"
-
 # Rename columns in the analysis dataset
 model_data = model_data.rename(columns=rename_dict)
 
+# HRV features used in the primary analysis.
+hrv_features = new_names.copy()
+
 # Primary analysis: 18 HRV features only.
-# For a sensitivity analysis, uncomment ONE of the following lines and rerun
-# the same pipeline (and supply the corresponding --sex_column or --age_column).
-model_features = new_names.copy()
-# model_features = ["Sex"] + new_names
-# model_features = ["Age"] + new_names
+model_features = hrv_features.copy()
+
+# Sensitivity analyses: uncomment ONE line and rerun the same pipeline.
+# Age and Sex remain separate columns in the metadata table.
+# model_features = hrv_features + ["Age"]
+# model_features = hrv_features + ["Sex"]
 
 # Select candidate features for modeling
 X_full = model_data[model_features]
